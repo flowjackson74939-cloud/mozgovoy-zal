@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Мозговой зал</title>
+<meta name="theme-color" content="#F1EEF6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#110D1C" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Мозговой зал">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@500;700&display=swap">
+<style>
+/* Layout: one phone-width column; calendar is home, the QR screen is a single giant button. */
+:root {
+  --bg: #F1EEF6; --surface: #FFFFFF; --ink: #1A1430; --muted: #64607A; --line: #DCD6E6;
+  --accent: #6D28D9; --accent-soft: #E2D3FA; --accent-ink: #FFFFFF; --warn: #A94E17; --warn-soft: #F6E3D6;
+  --f-display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --f-body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #110D1C; --surface: #1C1730; --ink: #ECE8F6; --muted: #9C96B2; --line: #2F2848;
+  --accent: #A57BFF; --accent-soft: #3A2B66; --accent-ink: #110D1C; --warn: #F1A167; --warn-soft: #3A2618; color-scheme: dark } }
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: calc(12px + env(safe-area-inset-top, 0px)) calc(40px + env(safe-area-inset-bottom, 0px));
+  -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
+.wrap { max-width: 460px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 8px; font-family: var(--f-display); font-weight: 700; font-size: 16px; }
+.brand img { width: 30px; height: 30px; border-radius: 8px; }
+.tabs { display: flex; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+.tabs button { border: 0; background: none; padding: 6px 13px; border-radius: 999px; font-size: 13px; font-weight: 500; color: var(--muted); }
+.tabs button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.stat { display: flex; flex-direction: column; gap: 2px; }
+.stat b { font-family: var(--f-display); font-weight: 500; font-size: 22px; line-height: 1.1; }
+.stat span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+
+.month { display: flex; align-items: center; justify-content: space-between; }
+.month h2 { margin: 0; font-family: var(--f-display); font-weight: 500; font-size: 18px; }
+.arrow { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-size: 18px; }
+.grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
+.wd { font-size: 11px; color: var(--muted); text-align: center; text-transform: uppercase; letter-spacing: .06em; padding-bottom: 2px; }
+.cell { aspect-ratio: 1 / 1.08; border-radius: 9px; border: 1px solid var(--line); background: var(--surface);
+  display: flex; flex-direction: column; justify-content: space-between; padding: 5px 6px; text-align: left; min-width: 0; }
+.cell .d { font-size: 13px; font-weight: 500; }
+.cell .m { font-family: var(--f-mono); font-size: 10px; align-self: flex-end; }
+.cell.lv1 { background: var(--accent-soft); border-color: transparent; }
+.cell.lv2 { background: var(--accent); border-color: transparent; color: var(--accent-ink); }
+.cell.today { box-shadow: inset 0 0 0 2px var(--ink); }
+.cell.future { opacity: .45; }
+.cell.blank { visibility: hidden; }
+.legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 5px; border: 1px solid var(--line); background: var(--surface); }
+.legend i.l1 { background: var(--accent-soft); border-color: transparent; }
+.legend i.l2 { background: var(--accent); border-color: transparent; }
+
+.tools { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--line); padding-top: 16px; }
+.tools h3 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.qrrow { display: flex; gap: 14px; align-items: center; }
+.qrrow img { width: 104px; height: auto; flex: none; border-radius: 10px; border: 1px solid var(--line); }
+.qrrow p { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 9px 14px; font-weight: 500; font-size: 14px; }
+.btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.btn.danger { color: var(--warn); }
+.btn.danger.armed { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+.btnrow { display: flex; gap: 8px; flex-wrap: wrap; }
+.msg { font-size: 13px; color: var(--muted); }
+
+.session { display: flex; flex-direction: column; gap: 16px; padding-top: 8px; }
+.big { width: 100%; min-height: 46vh; border: 0; border-radius: 22px; background: var(--accent); color: var(--accent-ink);
+  font-family: var(--f-display); font-weight: 700; font-size: clamp(40px, 13vw, 64px); letter-spacing: .02em;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+.big small { font-family: var(--f-body); font-weight: 500; font-size: 15px; letter-spacing: 0; opacity: .85; }
+.big.stop { background: var(--ink); color: var(--bg); }
+.big:active { transform: scale(.985); }
+.timer { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: clamp(44px, 15vw, 72px); font-weight: 500; text-align: center; line-height: 1; }
+.since { text-align: center; color: var(--muted); }
+.done { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.done b { font-family: var(--f-display); font-weight: 500; font-size: 20px; }
+.streakline { text-align: center; font-size: 14px; color: var(--muted); }
+.streakline b { color: var(--ink); font-family: var(--f-display); font-weight: 500; }
+
+.scrim { position: fixed; inset: 0; background: rgba(10, 6, 20, .45); z-index: 20; display: flex; align-items: flex-end; justify-content: center; }
+.sheet { background: var(--bg); width: 100%; max-width: 500px; max-height: 88vh; overflow-y: auto; border-radius: 18px 18px 0 0;
+  padding-block: 18px calc(22px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(18px, env(safe-area-inset-left, 0px)); padding-right: max(18px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 14px; }
+.sheet h3 { margin: 0; font-family: var(--f-display); font-weight: 500; font-size: 18px; text-wrap: balance; }
+.sheethead { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.x { border: 0; background: none; font-size: 22px; color: var(--muted); width: 36px; height: 36px; }
+.slist { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.srow { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 11px 14px; border: 0; border-top: 1px solid var(--line); text-align: left; background: none; width: 100%; }
+.srow:first-child { border-top: 0; }
+.srow .dur { font-weight: 600; }
+.srow .ed { color: var(--muted); font-size: 13px; }
+.total { display: flex; justify-content: space-between; font-weight: 600; padding: 0 4px; }
+.empty { color: var(--muted); padding: 4px; }
+.form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.form label.full { grid-column: 1 / -1; }
+.form input { font: 500 16px var(--f-mono); padding: 9px 10px; border-radius: 9px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); min-width: 0; width: 100%; }
+.stale { background: var(--warn-soft); }
+.stale .lead { margin: 0; }
+@media (prefers-reduced-motion: reduce) { .big:active { transform: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><img src="icon-192.png" alt="">Мозговой зал</div>
+    <nav class="tabs" aria-label="Разделы">
+      <button id="tab-cal" data-act="view" data-v="cal">Календарь</button>
+      <button id="tab-ses" data-act="view" data-v="ses">Сессия</button>
+    </nav>
+  </header>
+  <main id="app"></main>
+</div>
+<div id="layer"></div>
+<input id="importfile" type="file" accept=".csv,text/csv" hidden>
+
+<script>
+const KEY = "mozgovoy-zal.v1";
+const OFF = 5 * 3600e3;          // Asia/Qyzylorda, UTC+5 без перехода на летнее время
+const STALE = 3 * 3600e3;
+const MONTHS = ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
+const MONTHS_G = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+const WD = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
+
+const S = {
+  sessions: [], active: null,
+  view: location.hash === "#go" ? "ses" : "cal",
+  ym: null, openDay: null, edit: null, armed: null, lastDone: null, msg: ""
+};
+
+// ---- хранение на устройстве ----
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY) || "null");
+    S.sessions = d?.sessions || []; S.active = d?.active || null;
+  } catch { S.sessions = []; S.active = null; }
+}
+function persist() {
+  try { localStorage.setItem(KEY, JSON.stringify({ sessions: S.sessions, active: S.active })); }
+  catch { S.msg = "Не удалось сохранить: память браузера недоступна."; }
+}
+
+// ---- время ----
+const dayKey = ms => new Date(ms + OFF).toISOString().slice(0, 10);
+const hm = ms => new Date(ms + OFF).toISOString().slice(11, 16);
+const toMs = (day, t) => Date.parse(day + "T" + t + ":00Z") - OFF;
+const addDays = (day, n) => dayKey(Date.parse(day + "T12:00:00Z") - OFF + n * 864e5);
+const today = () => dayKey(Date.now());
+const pad = n => String(n).padStart(2, "0");
+function plural(n, f) { const a = n % 10, b = n % 100; return f[(a === 1 && b !== 11) ? 0 : (a >= 2 && a <= 4 && (b < 12 || b > 14)) ? 1 : 2]; }
+function dur(min) { if (min < 60) return min + " мин"; const h = Math.floor(min / 60), m = min % 60; return h + " ч" + (m ? " " + pad(m) + " мин" : ""); }
+function clock(ms) { const s = Math.max(0, Math.floor(ms / 1000)); return pad(Math.floor(s / 3600)) + ":" + pad(Math.floor(s / 60) % 60) + ":" + pad(s % 60); }
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// ---- агрегаты ----
+function byDay() {
+  const m = {};
+  for (const s of S.sessions) m[s.day] = (m[s.day] || 0) + (s.minutes || 0);
+  return m;
+}
+function streaks(days) {
+  let d = today(), cur = 0;
+  if (!(d in days)) d = addDays(d, -1);           // сегодня ещё не обрывает серию
+  while (d in days) { cur++; d = addDays(d, -1); }
+  const keys = Object.keys(days).sort();
+  let best = 0, run = 0, prev = null;
+  for (const k of keys) { run = prev && addDays(prev, 1) === k ? run + 1 : 1; best = Math.max(best, run); prev = k; }
+  return { cur, best };
+}
+const daySessions = day => S.sessions.filter(s => s.day === day).sort((a, b) => a.start - b.start);
+
+// ---- рендер ----
+function render() {
+  document.getElementById("tab-cal").setAttribute("aria-pressed", S.view === "cal");
+  document.getElementById("tab-ses").setAttribute("aria-pressed", S.view === "ses");
+  document.getElementById("app").innerHTML = S.view === "ses" ? viewSession() : viewCal();
+  renderLayer();
+}
+
+function viewCal() {
+  const days = byDay(), st = streaks(days);
+  if (!S.ym) S.ym = today().slice(0, 7);
+  const [y, mo] = S.ym.split("-").map(Number);
+  const nDays = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+  const lead = (new Date(Date.UTC(y, mo - 1, 1)).getUTCDay() + 6) % 7;
+  let mDays = 0, mMin = 0;
+  for (const k in days) if (k.startsWith(S.ym)) { mDays++; mMin += days[k]; }
+  const t = today();
+  let cells = WD.map(w => `<div class="wd">${w}</div>`).join("");
+  for (let i = 0; i < lead; i++) cells += `<div class="cell blank"></div>`;
+  for (let d = 1; d <= nDays; d++) {
+    const k = `${S.ym}-${pad(d)}`, min = days[k];
+    const lv = min === undefined ? 0 : min < 30 ? 1 : 2;
+    cells += `<button class="cell lv${lv}${k === t ? " today" : ""}${k > t ? " future" : ""}" data-act="day" data-day="${k}" aria-label="${d} ${MONTHS_G[mo - 1]}: ${min || 0} мин">
+      <span class="d">${d}</span><span class="m">${min !== undefined ? min : ""}</span></button>`;
+  }
+  return `
+  <section class="stats" aria-label="Итоги">
+    <div class="stat"><b class="num">${st.cur}</b><span>серия</span></div>
+    <div class="stat"><b class="num">${st.best}</b><span>лучшая</span></div>
+    <div class="stat"><b class="num">${mDays}</b><span>дней</span></div>
+    <div class="stat"><b class="num">${mMin}</b><span>минут</span></div>
+  </section>
+  <section style="display:flex;flex-direction:column;gap:10px">
+    <div class="month">
+      <button class="arrow" data-act="month" data-d="-1" aria-label="Предыдущий месяц">←</button>
+      <h2>${MONTHS[mo - 1]} ${y}</h2>
+      <button class="arrow" data-act="month" data-d="1" aria-label="Следующий месяц">→</button>
+    </div>
+    <div class="grid">${cells}</div>
+    <div class="legend"><span><i></i>0 мин</span><span><i class="l1"></i>до 30 мин</span><span><i class="l2"></i>30 мин и больше</span></div>
+  </section>
+  <section class="tools">
+    <h3>QR для тетради</h3>
+    <div class="qrrow">
+      <img src="qr.png" alt="QR-код для старта и завершения сессии">
+      <div>
+        <p>Наклейте на обложку. Один код и запускает, и завершает сессию.</p>
+        <button class="btn primary" data-act="qr">Сохранить QR</button>
+      </div>
+    </div>
+    <h3 style="margin-top:6px">Данные</h3>
+    <div class="btnrow">
+      <button class="btn" data-act="add" data-day="${t}">Добавить сессию</button>
+      <button class="btn" data-act="csv">Экспорт CSV</button>
+      <button class="btn" data-act="import">Импорт CSV</button>
+    </div>
+    <div class="msg">${S.msg ? esc(S.msg) : "Сессии хранятся только на этом телефоне. Раз в месяц делайте экспорт CSV, чтобы не потерять историю."}</div>
+  </section>`;
+}
+
+function viewSession() {
+  const st = streaks(byDay());
+  const streak = `<div class="streakline">Серия: <b class="num">${st.cur}</b> ${plural(st.cur, ["день", "дня", "дней"])} подряд</div>`;
+  if (S.active) {
+    return `<div class="session">
+      <div class="timer" id="timer">${clock(Date.now() - S.active.start)}</div>
+      <div class="since">Начало в <span class="num">${hm(S.active.start)}</span></div>
+      <button class="big stop" data-act="stop">Завершить</button>
+      ${streak}</div>`;
+  }
+  const done = S.lastDone ? `<div class="done"><span>Засчитано</span><b class="num">${dur(S.lastDone.minutes)}</b><span class="msg">за сегодня всего ${dur(S.lastDone.dayTotal)}</span></div>` : "";
+  return `<div class="session">${done}
+    <button class="big" data-act="start">Старт<small>урок + тетрадь</small></button>
+    ${streak}</div>`;
+}
+
+function renderLayer() {
+  const L = document.getElementById("layer");
+  let html = "";
+  if (S.active && Date.now() - S.active.start > STALE) {
+    const h = (Date.now() - S.active.start) / 60000;
+    html = `<div class="scrim"><div class="sheet stale" role="dialog" aria-modal="true" aria-labelledby="st-h">
+      <h3 id="st-h">Сессия не завершена</h3>
+      <p class="lead">Сессия идёт с <b class="num">${hm(S.active.start)}</b>, ${dayKey(S.active.start) === today() ? "сегодня" : dayKey(S.active.start).split("-").reverse().join(".")}: уже ${dur(Math.round(h))}. Сколько минут засчитать?</p>
+      <div class="form"><label class="full">Минут<input id="st-min" type="number" inputmode="numeric" min="1" max="600" value="60"></label></div>
+      <div class="btnrow">
+        <button class="btn primary" data-act="stale-save">Засчитать</button>
+        <button class="btn danger${S.armed === "stale" ? " armed" : ""}" data-act="stale-del">${S.armed === "stale" ? "Точно удалить?" : "Удалить сессию"}</button>
+      </div></div></div>`;
+  } else if (S.edit) {
+    const e = S.edit;
+    html = `<div class="scrim" data-act="close-bg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="ed-h">
+      <div class="sheethead"><h3 id="ed-h">${e.id ? "Исправить сессию" : "Новая сессия"}</h3><button class="x" data-act="close" aria-label="Закрыть">×</button></div>
+      <div class="form">
+        <label class="full">Дата<input id="f-day" type="date" value="${e.day}"></label>
+        <label>Начало<input id="f-start" type="time" value="${e.start}"></label>
+        <label>Конец<input id="f-end" type="time" value="${e.end}"></label>
+      </div>
+      <div class="msg">Если конец раньше начала, сессия считается через полночь и записывается на дату начала.</div>
+      <div class="btnrow">
+        <button class="btn primary" data-act="save">Сохранить</button>
+        ${e.id ? `<button class="btn danger${S.armed === e.id ? " armed" : ""}" data-act="del">${S.armed === e.id ? "Точно удалить?" : "Удалить"}</button>` : ""}
+      </div>
+      ${S.msg ? `<div class="msg">${esc(S.msg)}</div>` : ""}
+    </div></div>`;
+  } else if (S.openDay) {
+    const list = daySessions(S.openDay), total = list.reduce((a, s) => a + s.minutes, 0);
+    const [y, m, d] = S.openDay.split("-").map(Number);
+    html = `<div class="scrim" data-act="close-bg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="dy-h">
+      <div class="sheethead"><h3 id="dy-h">${d} ${MONTHS_G[m - 1]} ${y}</h3><button class="x" data-act="close" aria-label="Закрыть">×</button></div>
+      ${list.length ? `<div class="slist">${list.map(s => `<button class="srow" data-act="edit" data-id="${s.id}">
+          <span class="num">${hm(s.start)} – ${hm(s.end)}</span><span class="dur num">${dur(s.minutes)}</span><span class="ed">изм.</span></button>`).join("")}</div>
+        <div class="total"><span>Итого за день</span><span class="num">${dur(total)}</span></div>`
+        : `<div class="empty">В этот день сессий нет.</div>`}
+      <div class="btnrow"><button class="btn" data-act="add" data-day="${S.openDay}">Добавить сессию</button></div>
+    </div></div>`;
+  }
+  if (L._h === html) return;        // не сбрасывать введённое, если лист не изменился
+  L._h = html; L.innerHTML = html;
+}
+
+// ---- файлы ----
+async function saveFile(name, blob) {
+  const file = new File([blob], name, { type: blob.type });
+  if (navigator.canShare?.({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: name }); return; }
+    catch (e) { if (e.name === "AbortError") return; }
+  }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function exportCsv() {
+  const rows = [...S.sessions].sort((a, b) => a.start - b.start)
+    .map(s => [s.day.split("-").reverse().join("."), hm(s.start), hm(s.end), s.minutes].join(";"));
+  const csv = "﻿" + ["Дата;Начало;Конец;Минуты", ...rows].join("\r\n");
+  return saveFile(`mozgovoy-zal-${today()}.csv`, new Blob([csv], { type: "text/csv" }));
+}
+function importCsv(text) {
+  let added = 0;
+  for (const line of text.replace(/^﻿/, "").split(/\r?\n/).slice(1)) {
+    const m = line.trim().match(/^(\d{2})\.(\d{2})\.(\d{4});(\d{2}:\d{2});(\d{2}:\d{2});(\d+)/);
+    if (!m) continue;
+    const day = `${m[3]}-${m[2]}-${m[1]}`, start = toMs(day, m[4]);
+    if (S.sessions.some(s => s.start === start)) continue;
+    S.sessions.push({ id: "s" + start, day, start, end: start + Number(m[6]) * 60000, minutes: Number(m[6]) });
+    added++;
+  }
+  persist();
+  S.msg = added ? `Добавлено сессий: ${added}.` : "Новых сессий в файле нет.";
+}
+
+// ---- действия ----
+function putSession(id, start, end) {
+  const minutes = Math.max(1, Math.round((end - start) / 60000));
+  const s = { id, day: dayKey(start), start, end, minutes };
+  const i = S.sessions.findIndex(x => x.id === id);
+  if (i >= 0) S.sessions[i] = s; else S.sessions.push(s);
+  return minutes;
+}
+function act(a, el) {
+  load();                                       // свежие данные, если приложение открыто в двух окнах
+  if (a === "view") { S.view = el.dataset.v; S.lastDone = null; S.msg = ""; }
+  else if (a === "month") { const [y, m] = S.ym.split("-").map(Number); S.ym = new Date(Date.UTC(y, m - 1 + Number(el.dataset.d), 1)).toISOString().slice(0, 7); }
+  else if (a === "day") S.openDay = el.dataset.day;
+  else if (a === "close" || a === "close-bg") { if (S.edit) S.edit = null; else S.openDay = null; S.armed = null; S.msg = ""; }
+  else if (a === "start") {
+    if (!S.active) { S.active = { start: Date.now() }; S.lastDone = null; persist(); }
+  } else if (a === "stop") {
+    if (S.active) {
+      const st = S.active.start, minutes = putSession("s" + st, st, Date.now());
+      S.active = null; persist();
+      S.lastDone = { minutes, dayTotal: byDay()[dayKey(st)] || 0 };
+    }
+  } else if (a === "stale-save") {
+    const min = Math.round(Number(document.getElementById("st-min").value));
+    if (!(min >= 1 && min <= 600) || !S.active) return;
+    const st = S.active.start;
+    putSession("s" + st, st, st + min * 60000); S.active = null; persist();
+  } else if (a === "stale-del") {
+    if (S.armed !== "stale") S.armed = "stale";
+    else { S.armed = null; S.active = null; persist(); }
+  } else if (a === "add") {
+    S.edit = { id: null, day: el.dataset.day, start: "20:00", end: "20:45" }; S.armed = null; S.msg = "";
+  } else if (a === "edit") {
+    const s = S.sessions.find(x => x.id === el.dataset.id);
+    if (s) { S.edit = { id: s.id, day: s.day, start: hm(s.start), end: hm(s.end) }; S.armed = null; S.msg = ""; }
+  } else if (a === "save") {
+    const day = document.getElementById("f-day").value, t1 = document.getElementById("f-start").value, t2 = document.getElementById("f-end").value;
+    if (!day || !t1 || !t2) { S.msg = "Заполните дату, начало и конец."; return render(); }
+    const start = toMs(day, t1); let end = toMs(day, t2);
+    if (end <= start) end += 864e5;
+    putSession(S.edit.id || "m" + Date.now(), start, end); persist();
+    S.openDay = day; S.edit = null; S.msg = "";
+  } else if (a === "del") {
+    if (S.armed !== S.edit.id) S.armed = S.edit.id;
+    else { S.sessions = S.sessions.filter(s => s.id !== S.edit.id); persist(); S.armed = null; S.edit = null; }
+  } else if (a === "qr") { fetch("qr.png").then(r => r.blob()).then(b => saveFile("mozgovoy-zal-qr.png", b)); return; }
+  else if (a === "csv") { exportCsv(); return; }
+  else if (a === "import") { document.getElementById("importfile").click(); return; }
+  render();
+}
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-act]");
+  if (!el) return;
+  if (el.dataset.act === "close-bg" && e.target !== el) return;   // клик внутри листа не закрывает его
+  act(el.dataset.act, el);
+});
+document.getElementById("importfile").addEventListener("change", async e => {
+  const f = e.target.files[0]; e.target.value = "";
+  if (!f) return;
+  load(); importCsv(await f.text()); render();
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape" && (S.edit || S.openDay)) act("close"); });
+// повторный скан QR при открытом приложении: переходим на экран сессии
+window.addEventListener("hashchange", () => { if (location.hash === "#go") { S.view = "ses"; load(); render(); } });
+window.addEventListener("storage", e => { if (e.key === KEY) { load(); render(); } });
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { load(); render(); } });
+setInterval(() => {
+  const t = document.getElementById("timer");
+  if (t && S.active) t.textContent = clock(Date.now() - S.active.start);
+  if (S.active && Date.now() - S.active.start > STALE && !document.querySelector(".stale")) renderLayer();
+}, 1000);
+
+load(); render();
+navigator.storage?.persist?.();
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+</script>
+</body>
+</html>

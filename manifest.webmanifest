@@ -1,0 +1,17 @@
+{
+  "name": "Мозговой зал",
+  "short_name": "Мозговой зал",
+  "description": "Трекер учёбы: QR на тетради запускает и завершает сессию.",
+  "lang": "ru",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F1EEF6",
+  "theme_color": "#F1EEF6",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
