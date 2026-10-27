@@ -1,6 +1,6 @@
 // Офлайн-кэш: отдаём из кэша сразу, в фоне подтягиваем свежую версию.
-const CACHE = "mz-v1";
-const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png",
+const CACHE = "mz-v2";
+const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./jsQR.js", "./icon-192.png", "./icon-512.png",
   "./icon-maskable-512.png", "./apple-touch-icon.png", "./favicon.png", "./qr.png"];
 
 self.addEventListener("install", e => {
